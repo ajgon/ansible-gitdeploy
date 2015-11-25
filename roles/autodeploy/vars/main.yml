@@ -1,0 +1,9 @@
+deploy_user: deploy
+deploy_group: deploy
+projects:
+  # name will be also a directory name, so use unly [a-z_-] chars
+  - name: project_name
+    repo:
+      # github, gitlab and bitbucket are supported
+      url: https://github.com/user/project
+      branch: master

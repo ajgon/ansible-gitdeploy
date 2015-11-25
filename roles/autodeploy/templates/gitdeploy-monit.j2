@@ -1,0 +1,5 @@
+check process autodeploy_git
+  with pidfile /srv/www/.gitautodeploy.pid
+  start program "/bin/su - {{ deploy_user }} -c 'cd /usr/share/git-autodeploy && python ./GitAutoDeploy.py -d'" with timeout 90 seconds
+  stop  program "/bin/su - {{ deploy_user }} -c 'kill -s TERM `cat /srv/www/.gitautodeploy.pid`'" with timeout 90 seconds
+  group autodeploy

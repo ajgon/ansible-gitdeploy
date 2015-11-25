@@ -1,0 +1,16 @@
+{
+    "pidfilepath": "/srv/www/.gitautodeploy.pid",
+    "host": "127.0.0.1",
+    "port": 8001,
+    "repositories":
+    [
+{% for project in projects %}
+        {
+            "url": "{{ project.repo.url }}",
+            "branch": "{{ project.repo.branch }}",
+            "path": "/srv/www/{{ project.name }}"
+        }{% if not loop.last %},{% endif %}
+{% endfor %}
+
+    ]
+}

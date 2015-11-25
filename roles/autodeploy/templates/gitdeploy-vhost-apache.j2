@@ -1,0 +1,14 @@
+ProxyRequests off
+ProxyPreserveHost On
+
+<Location /_autodeploy>
+    AuthType Basic
+    AuthName "Authentication Required"
+    AuthUserFile "/etc/apache2/.htpasswd-gitdeploy"
+    Require valid-user
+
+    ProxyPass http://127.0.0.1:8001/
+    ProxyPassReverse http://127.0.0.1:8001/
+    Order allow,deny
+    Allow from all
+</Location>
