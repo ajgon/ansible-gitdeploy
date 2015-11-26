@@ -1,0 +1,29 @@
+- set_fact:
+    apache_installed: true
+- name: Add gitdeploy config
+  template: src=roles/autodeploy/templates/gitdeploy-vhost-apache.j2 dest="{{ vhost_path }}/gitdeploy.conf"
+- name: Enable gitdeploy config
+  file: src="{{ vhost_path }}/gitdeploy.conf" dest="/etc/apache2/sites-enabled/gitdeploy.conf" state=link
+  when: vhost_path_apt_available.stat.exists == True
+- name: Enable proxy_http module
+  apache2_module: state=present name=proxy_http
+  when: vhost_path_apt_available.stat.exists == True
+- name: Add www-data user to deploy group
+  user: name=www-data groups=deploy append=yes
+  when: vhost_path_apt_available.stat.exists == True
+- name: Add apache user to deploy group
+  user: name=apache groups=deploy append=yes
+  when: vhost_path_yum_available.stat.exists == True
+- name: Create password for gitdeploy
+  shell: pwgen 24 1
+  register: httpd_password
+- set_fact:
+    gitdeploy_password: "{{ ''.join(httpd_password.stdout_lines) }}"
+- name: Protect gitdeploy with password
+  shell: htpasswd -bc /etc/.htpasswd-gitdeploy gitdeploy {{ gitdeploy_password }}
+- name: Restart apache2
+  service: state=restarted name=apache2
+  when: vhost_path_apt_available.stat.exists == True
+- name: Restart httpd
+  service: state=restarted name=httpd
+  when: vhost_path_yum_available.stat.exists == True

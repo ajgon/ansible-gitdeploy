@@ -1,0 +1,8 @@
+- name: Install git
+  yum: pkg=git state=latest
+- name: Install monit
+  yum: pkg=monit state=latest
+- name: Install pwgen
+  yum: pkg=pwgen state=latest enablerepo=epel
+- name: Install httpd-tools
+  yum: pkg=httpd-tools state=latest

@@ -1,0 +1,11 @@
+- stat: path=/etc/nginx/sites-available
+  register: vhost_path_apt_available
+- set_fact: vhost_path=/etc/nginx/sites-available
+  when: vhost_path_apt_available.stat.exists == True
+# - stat: path=/etc/httpd/conf.d
+#   register: vhost_path_yum_available
+# - set_fact: vhost_path=/etc/httpd/conf.d
+#   when: vhost_path_yum_available.stat.exists == True
+- include: vhost.yml
+  when: vhost_path_apt_available.stat.exists == True
+  # or vhost_path_yum_available.stat.exists == True

@@ -23,7 +23,7 @@ Next, you need to configure your new system(s) variables:
 
     vi roles/autodeploy/vars/main.yml
 
-And you're ready to rock!
+This script expects, that you have either apache or nginx installed on the server. If you do - you're ready to rock!
 
     ansible-playbook -s -i ansible-inventory main.yml
 

@@ -1,0 +1,10 @@
+- name: Check if apt-get exists
+  stat: path=/usr/bin/apt-get
+  register: apt
+- name: Check if yum exists
+  stat: path=/usr/bin/yum
+  register: yum
+- include: apt.yml
+  when: apt.stat.exists == True
+- include: yum.yml
+  when: yum.stat.exists == True

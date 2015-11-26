@@ -1,0 +1,13 @@
+- name: Add deploy user
+  user: name="{{ deploy_user }}"
+- name: Add deploy group
+  group: name="{{ deploy_group }}"
+- name: Check if ssh key exists
+  stat: path=/home/{{ deploy_user }}/.ssh/id_rsa
+  register: ssh_key
+- name: Create SSH key for deploy user if not exists
+  shell: su - {{ deploy_user }} -c 'ssh-keygen -N "" -f ~/.ssh/id_rsa'
+  when: ssh_key.stat.exists == False
+- name: Get key for output
+  shell: su - {{ deploy_user }} -c 'cat ~/.ssh/id_rsa.pub'
+  register: ssh_pubkey

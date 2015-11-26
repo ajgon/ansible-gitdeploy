@@ -1,0 +1,11 @@
+- name: Create projects deploy directory
+  file: path="/srv/www" mode=0770 state=directory owner="{{ deploy_user }}" group="{{ deploy_group }}"
+- name: Install gitdeploy
+  git: repo=https://github.com/olipo186/Git-Auto-Deploy.git dest=/usr/share/git-autodeploy
+- name: Add gitdeploy config
+  template: src=roles/autodeploy/templates/GitAutoDeploy.conf.json.j2 dest="/usr/share/git-autodeploy/GitAutoDeploy.conf.json"
+- name: Clone projects
+  git: repo="{{ item.repo.url }}" dest="/srv/www/{{ item.name }}" version="{{ item.repo.branch }}"
+  with_items: projects
+- name: Set projects ownership
+  file: path="/srv/www" owner="{{ deploy_user }}" group="{{ deploy_group }}" mode="u+w,g+w" recurse=yes

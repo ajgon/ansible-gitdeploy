@@ -1,0 +1,12 @@
+- stat: path=/etc/monit/conf.d
+  register: monit_path_available
+- set_fact: monit_path=/etc/monit/conf.d
+  when: monit_path_available.stat.exists == True
+- stat: path=/etc/monit.d
+  register: monit_path_available
+- set_fact: monit_path=/etc/monit.d
+  when: monit_path_available.stat.exists == True
+- name: Add monit templates
+  template: src=roles/autodeploy/templates/gitdeploy-monit.j2 dest="{{ monit_path }}/git-deploy"
+- name: Restart monit
+  service: state=restarted name=monit

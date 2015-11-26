@@ -1,76 +1,15 @@
-- name: Check if apt-get exists
-  stat: path=/usr/bin/apt-get
-  register: apt
-- name: Check if yum exists
-  stat: path=/usr/bin/yum
-  register: yum
-- name: Install git
-  apt: pkg=git state=latest
-  when: apt.stat.exists == True
-- name: Install monit
-  apt: pkg=monit state=latest
-  when: apt.stat.exists == True
-- name: Install pwgen
-  apt: pkg=pwgen state=latest
-  when: apt.stat.exists == True
-- name: Install git
-  yum: pkg=git state=latest
-  when: yum.stat.exists == True
-- name: Install monit
-  yum: pkg=monit state=latest
-  when: yum.stat.exists == True
-- name: Install pwgen
-  yum: pkg=pwgen state=latest
-  when: yum.stat.exists == True
-- name: Add deploy user
-  user: name="{{ deploy_user }}"
-- name: Add deploy group
-  group: name="{{ deploy_group }}"
-- name: Check if ssh key exists
-  stat: path=/home/{{ deploy_user }}/.ssh/id_rsa
-  register: ssh_key
-- name: Create SSH key for deploy user
-  shell: su - {{ deploy_user }} -c 'ssh-keygen -N "" -f ~/.ssh/id_rsa'
-  when: ssh_key.stat.exists == False
-- name: Get key for output
-  shell: su - {{ deploy_user }} -c 'cat ~/.ssh/id_rsa.pub'
-  register: ssh_pubkey
-- name: Create projects deploy directory
-  file: path="/srv/www" mode=0770 state=directory owner="{{ deploy_user }}" group="{{ deploy_group }}"
-- name: Add monit templates
-  template: src=roles/autodeploy/templates/gitdeploy-monit.j2 dest="/etc/monit/conf.d/git-deploy"
-- name: Install gitdeploy
-  git: repo=https://github.com/olipo186/Git-Auto-Deploy.git dest=/usr/share/git-autodeploy
-- name: Add gitdeploy config
-  template: src=roles/autodeploy/templates/GitAutoDeploy.conf.json.j2 dest="/usr/share/git-autodeploy/GitAutoDeploy.conf.json"
-- name: Clone projects
-  git: repo="{{ item.repo.url }}" dest="/srv/www/{{ item.name }}" version="{{ item.repo.branch }}"
-  with_items: projects
-- name: Set projects ownership
-  file: path="/srv/www" owner="{{ deploy_user }}" group="{{ deploy_group }}" mode="u+w,g+w" recurse=yes
-- name: Restart monit
-  service: state=restarted name=monit
-- name: Check for apache
-  stat: path=/etc/apache2/sites-available
-  register: apache
-- name: Add gitdeploy config
-  template: src=roles/autodeploy/templates/gitdeploy-vhost-apache.j2 dest="/etc/apache2/sites-available/gitdeploy.conf"
-  when: apache.stat.exists == True
-- name: Enable gitdeploy config
-  file: src=/etc/apache2/sites-available/gitdeploy.conf dest=/etc/apache2/sites-enabled/gitdeploy.conf state=link
-  when: apache.stat.exists == True
-- name: Enable proxy_http module
-  apache2_module: state=present name=proxy_http
-  when: apache.stat.exists == True
-- name: Create password for gitdeploy
-  shell: pwgen 24 1
-  register: gitdeploy_password
-- name: Protect gitdeploy with password
-  shell: htpasswd -bcB /etc/apache2/.htpasswd-gitdeploy gitdeploy {{ ''.join(gitdeploy_password.stdout_lines) }}
-- name: Restart apache
-  service: state=restarted name=apache2
-  when: apache.stat.exists == True
+- set_fact:
+    apache_installed: false
+    nginx_installed: false
+- include: manager/main.yml
+- include: user.yml
+- include: gitdeploy.yml
+- include: monit.yml
+- include: apache/main.yml
+- include: nginx/main.yml
+- fail: msg="This scripts supports only Apache and nginx and one of them must be installed on the target server"
+  when: apache_installed != True and nginx_installed != True
 - name: Your deploy key
   debug: msg="{{ ''.join(ssh_pubkey.stdout_lines) }}"
 - name: Your webhook
-  debug: msg="http://gitdeploy:{{ ''.join(gitdeploy_password.stdout_lines) }}@{{ ansible_default_ipv4.address }}/_autodeploy"
+  debug: msg="http://gitdeploy:{{ gitdeploy_password }}@{{ ansible_default_ipv4.address }}/_autodeploy"
